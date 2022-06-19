@@ -8,8 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-
-	"golang.org/x/exp/slices"
 )
 
 type Arguments map[string]string
@@ -72,42 +70,6 @@ func Perform(args Arguments, writer io.Writer) error {
 	return nil
 }
 
-// func validateOpList(args Arguments) error {
-// 	fileName := args[pFileName]
-
-// 	if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func doList(args Arguments) ([]byte, error) {
-// 	// 1. Validate all entered params have values
-// 	err0 := validateParamEntered(args, []string{pOperation, pFileName})
-
-// 	if err0 != nil {
-// 		return nil, err0
-// 	}
-
-// 	// 2. Validate that operation requested is allowed
-// 	err1 := validateOpAllowed(args[pOperation])
-
-// 	if err1 != nil {
-// 		return nil, err1
-// 	}
-
-// 	var buf []byte
-// 	var err error
-
-// 	if err != nil {
-// 		fmt.Println("err?", err, args)
-// 		return nil, err
-// 	}
-
-// 	return buf, nil
-// }
-
 func read(args Arguments) ([]byte, error) {
 	var r, err = os.OpenFile(args[pFileName], os.O_RDONLY|os.O_CREATE, 0444)
 
@@ -122,14 +84,6 @@ func read(args Arguments) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// m := []Record{}
-
-	// err2 := json.Unmarshal(buf, &m)
-
-	// if err2 != nil {
-	// 	return nil, err2
-	// }
 
 	return buf, nil
 }
@@ -283,7 +237,7 @@ func validateConsequently(args Arguments, reqFlag string, params map[string]opRe
 }
 
 func validateOpAllowed(operation string) error {
-	if !slices.Contains(operationsIndex, operation) {
+	if !contains(operationsIndex, operation) {
 		return errors.New("Operation " + operation + " not allowed!")
 	}
 
@@ -299,6 +253,15 @@ func validateParamEntered(args Arguments, params []string) error {
 	}
 
 	return nil
+}
+
+func contains(values []string, value string) bool {
+	for _, v := range values {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 func parseArgs() Arguments {
