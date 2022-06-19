@@ -61,7 +61,6 @@ func Perform(args Arguments, writer io.Writer) error {
 	}
 
 	if err != nil {
-		fmt.Println("err?", err, args)
 		return err
 	}
 
@@ -71,41 +70,14 @@ func Perform(args Arguments, writer io.Writer) error {
 }
 
 func read(args Arguments) ([]byte, error) {
-	var r, err = os.OpenFile(args[pFileName], os.O_RDONLY|os.O_CREATE, 0444)
-
-	defer r.Close()
-
-	if err != nil {
-		return nil, err
-	}
-
-	buf, err := ioutil.ReadAll(r)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
+	return readFileToBuffer(args[pFileName])
 }
 
 func add(args Arguments) ([]byte, error) {
-	var rw, err = os.OpenFile(args[pFileName], os.O_RDWR|os.O_CREATE, 0644)
-
-	defer rw.Close()
+	m, err := readFileToJSON(args[pFileName])
 
 	if err != nil {
 		return nil, err
-	}
-
-	buf, err := ioutil.ReadAll(rw)
-
-	m := []Record{}
-
-	if len(buf) != 0 {
-		err2 := json.Unmarshal(buf, &m)
-		if err2 != nil {
-			return nil, err2
-		}
 	}
 
 	n := Record{}
@@ -136,25 +108,10 @@ func add(args Arguments) ([]byte, error) {
 }
 
 func find(args Arguments) ([]byte, error) {
-	var rw, err = os.OpenFile(args[pFileName], os.O_RDONLY|os.O_CREATE, 0644)
-
-	defer rw.Close()
+	m, err := readFileToJSON(args[pFileName])
 
 	if err != nil {
 		return nil, err
-	}
-
-	buf, err := ioutil.ReadAll(rw)
-
-	m := []Record{}
-
-	if len(buf) == 0 {
-		return nil, errors.New("No data to search for a record")
-	}
-
-	err2 := json.Unmarshal(buf, &m)
-	if err2 != nil {
-		return nil, err2
 	}
 
 	for _, rec := range m {
@@ -168,25 +125,10 @@ func find(args Arguments) ([]byte, error) {
 }
 
 func remove(args Arguments) ([]byte, error) {
-	var rw, err = os.OpenFile(args[pFileName], os.O_RDONLY|os.O_CREATE, 0644)
-
-	defer rw.Close()
+	m, err := readFileToJSON(args[pFileName])
 
 	if err != nil {
 		return nil, err
-	}
-
-	buf, err := ioutil.ReadAll(rw)
-
-	m := []Record{}
-
-	if len(buf) == 0 {
-		return nil, errors.New("No data to search for a record")
-	}
-
-	err2 := json.Unmarshal(buf, &m)
-	if err2 != nil {
-		return nil, err2
 	}
 
 	var foundId string
@@ -211,6 +153,43 @@ func remove(args Arguments) ([]byte, error) {
 	}
 
 	return marshalled, errLast
+}
+
+func readFileToBuffer(fileName string) ([]byte, error) {
+	var r, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
+
+	defer r.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := ioutil.ReadAll(r)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf, nil
+}
+
+func readFileToJSON(fileName string) ([]Record, error) {
+	buf, err := readFileToBuffer(fileName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	m := []Record{}
+
+	if len(buf) != 0 {
+		err2 := json.Unmarshal(buf, &m)
+		if err2 != nil {
+			return nil, err2
+		}
+	}
+
+	return m, nil
 }
 
 func validateConsequently(args Arguments, reqFlag string, params map[string]opRequirements) error {
